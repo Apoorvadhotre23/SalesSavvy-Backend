@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,8 +23,20 @@ public class AuthenticationController {
     }
 	
     @PostMapping("/signup")
-    public Users registerUser(@RequestBody Users user) {
-        return authenticationService.registerUser(user);
+    public ResponseEntity<?> registerUser(@RequestBody Users user) {
+
+        try {
+            Users registeredUser =
+                    authenticationService.registerUser(user);
+
+            return ResponseEntity.ok(registeredUser);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+        }
     }
     
     @PostMapping("/login")
