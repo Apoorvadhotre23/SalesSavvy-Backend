@@ -49,15 +49,44 @@ public class AuthenticationService {
 	        );
 	        
 	        // 4. Save user
-	        Users registeredUser = userRepo.save(user);
+	        return userRepo.save(user);
+	        
+	 }      
+	
+	// Login
+	 
+	 public Users loginUser(LoginDTO userCredentials) {
+
+		    // 1. Find user by email
+	        Optional<Users> optionalUser =
+	                userRepo.findByEmail(userCredentials.getEmail());
+	        
+	        // 2. Check whether user exists
+	        if (optionalUser.isEmpty()) {
+	            throw new RuntimeException("Invalid email or password");
+	        }
+
+	        Users user = optionalUser.get();
+
+	        // 3. Check password
+	        boolean passwordMatches =
+	                passwordEncoder.matches(
+	                        userCredentials.getPassword(),
+	                        user.getPassword()
+	                );
+
+	        // 4. If password is wrong
+	        if (!passwordMatches) {
+	            throw new RuntimeException("Invalid email or password");
+	        }
 	        
 	        // 5. Generate JWT
-	        String token = jwtService.generateToken(registeredUser);
+	        String token = jwtService.generateToken(user);
 	        
 	     // 6. Create Jwt_Tokens object
 	        Jwt_Tokens jwtToken = new Jwt_Tokens();
 	        
-	        jwtToken.setUser(registeredUser);
+	        jwtToken.setUser(user);
 	        jwtToken.setToken(token);
 	        jwtToken.setExpires_at(
 	                jwtService.getExpirationTime()
@@ -67,33 +96,9 @@ public class AuthenticationService {
 	        jwtRepo.save(jwtToken);
 
 	        // 8. Return registered user
-	        return registeredUser;
-	    }
-	
-	// Login
-	 
-	 public Users loginUser(LoginDTO userCredentials) {
-
-	        Optional<Users> optionalUser =
-	                userRepo.findByEmail(userCredentials.getEmail());
-
-	        if (optionalUser.isEmpty()) {
-	            throw new RuntimeException("Invalid email or password");
-	        }
-
-	        Users user = optionalUser.get();
-
-	        boolean passwordMatches =
-	                passwordEncoder.matches(
-	                        userCredentials.getPassword(),
-	                        user.getPassword()
-	                );
-
-	        if (!passwordMatches) {
-	            throw new RuntimeException("Invalid email or password");
-	        }
-
 	        return user;
+	    
+	 
 		
 	     
 	}

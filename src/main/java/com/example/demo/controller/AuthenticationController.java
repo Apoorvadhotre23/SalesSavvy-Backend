@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,8 +42,21 @@ public class AuthenticationController {
     }
     
     @PostMapping("/login")
-    public Users loginUser(@RequestBody LoginDTO userCredentials) {
-        return authenticationService.loginUser(userCredentials);
+    public ResponseEntity<?> loginUser(@RequestBody LoginDTO userCredentials) {
+        //return authenticationService.loginUser(userCredentials);
+        
+        try {
+
+            Users user = authenticationService.loginUser(userCredentials);
+
+            return ResponseEntity.ok(user);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
 }
