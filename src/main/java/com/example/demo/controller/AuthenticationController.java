@@ -13,9 +13,12 @@ import com.example.demo.dto.LoginDTO;
 import com.example.demo.entity.Users;
 import com.example.demo.service.AuthenticationService;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:5173",
+allowCredentials = "true")
 public class AuthenticationController {
 	
 	AuthenticationService authenticationService;
@@ -42,12 +45,12 @@ public class AuthenticationController {
     }
     
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody LoginDTO userCredentials) {
+    public ResponseEntity<?> loginUser(@RequestBody LoginDTO userCredentials,HttpServletResponse response) {
         //return authenticationService.loginUser(userCredentials);
         
         try {
 
-            Users user = authenticationService.loginUser(userCredentials);
+            Users user = authenticationService.loginUser(userCredentials, response);
 
             return ResponseEntity.ok(user);
 

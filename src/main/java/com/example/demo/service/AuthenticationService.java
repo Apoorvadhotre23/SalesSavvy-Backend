@@ -1,16 +1,13 @@
 package com.example.demo.service;
 
 import java.util.Optional;
-
-
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.LoginDTO;
-import com.example.demo.entity.Jwt_Tokens;
 import com.example.demo.entity.Users;
-import com.example.demo.repository.JwtTokensRepository;
 import com.example.demo.repository.UserRepository;
 
 @Service
@@ -18,14 +15,12 @@ import com.example.demo.repository.UserRepository;
 public class AuthenticationService {
 
 	UserRepository userRepo;
-	JwtTokensRepository jwtRepo;
 	PasswordEncoder passwordEncoder;
 	JwtService jwtService;
 	
 	
-	public AuthenticationService(UserRepository userRepo, JwtTokensRepository jwtRepo, PasswordEncoder passwordEncoder, JwtService jwtService) {
+	public AuthenticationService(UserRepository userRepo, PasswordEncoder passwordEncoder, JwtService jwtService) {
 		this.userRepo = userRepo;
-		this.jwtRepo = jwtRepo;
 		this.passwordEncoder = passwordEncoder;
 		this.jwtService = jwtService;
 	}
@@ -55,7 +50,7 @@ public class AuthenticationService {
 	
 	// Login
 	 
-	 public Users loginUser(LoginDTO userCredentials) {
+	 public Users loginUser(LoginDTO userCredentials, HttpServletResponse response) {
 
 		    // 1. Find user by email
 	        Optional<Users> optionalUser =
@@ -77,30 +72,18 @@ public class AuthenticationService {
 
 	        // 4. If password is wrong
 	        if (!passwordMatches) {
-	            throw new RuntimeException("Invalid email or password");
+	            throw new RuntimeException("Invalid password");
 	        }
 	        
 	        // 5. Generate JWT
 	        String token = jwtService.generateToken(user);
-	        
-	     // 6. Create Jwt_Tokens object
-	        Jwt_Tokens jwtToken = new Jwt_Tokens();
-	        
-	        jwtToken.setUser(user);
-	        jwtToken.setToken(token);
-	        jwtToken.setExpires_at(
-	                jwtService.getExpirationTime()
-	        );
-	        
-	        // 7. Save token
-	        jwtRepo.save(jwtToken);
 
-	        // 8. Return registered user
+	        // 6. Add JWT to cookie
+	        jwtService.addCookie(token, response);
+	        
+	        // 7. Return registered user
 	        return user;
 	    
-	 
-		
-	     
 	}
 
 }

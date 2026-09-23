@@ -2,13 +2,14 @@ package com.example.demo.entity;
 
 import java.time.LocalDateTime;
 
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -20,8 +21,8 @@ public class Jwt_Tokens {
     @Column(name = "token_id")
     private int token_id;
 	
-	    @ManyToOne
-	    @JoinColumn(name = "user_id", nullable = false)
+	    @OneToOne
+	    @JoinColumn(name = "user_id", nullable = false, unique = true)
 	    private Users user;
 
 	    @Column(name = "token", nullable = false, length = 1000)
