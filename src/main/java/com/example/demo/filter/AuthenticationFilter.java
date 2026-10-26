@@ -1,12 +1,12 @@
 package com.example.demo.filter;
 
 import java.io.IOException;
+
 import java.util.Arrays;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.entity.Role;
@@ -19,7 +19,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -54,9 +53,20 @@ public class AuthenticationFilter implements Filter{
 			executeFilterLogin(request, response, chain);
 			
 		} catch (Exception e) {
-			logger.error("Unexpected Error in Authentication Filter ", e);
-			HttpServletResponse httpresponse = (HttpServletResponse)response;
-			sendErrorResponse(httpresponse, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+		    logger.error("Unexpected Error in Authentication Filter", e);
+
+		    HttpServletResponse httpresponse =
+		            (HttpServletResponse) response;
+
+		    if (!httpresponse.isCommitted()) {
+		        httpresponse.resetBuffer();
+
+		        sendErrorResponse(
+		            httpresponse,
+		            HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+		            "Internal Server Error"
+		        );
+		    }
 		}
 		
 	}
@@ -69,6 +79,28 @@ public class AuthenticationFilter implements Filter{
 		String requestURI = httpRequest.getRequestURI();
 		logger.info("Request URI : {} ", requestURI);
 		
+		if (requestURI.startsWith("/api/")) {
+
+		    String origin = httpRequest.getHeader("Origin");
+
+		    if (ALLOWED_ORIGIN.equals(origin)) {
+		        setCORSHeaders(httpResponse);
+		    }
+
+		    if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
+
+		        if (!ALLOWED_ORIGIN.equals(origin)) {
+		            httpResponse.sendError(
+		                HttpServletResponse.SC_FORBIDDEN
+		            );
+		            return;
+		        }
+
+		        httpResponse.setStatus(HttpServletResponse.SC_OK);
+		        return;
+		    }
+		}
+		
 		if(Arrays.asList(UNAUTHENTICATED_PATHS).contains(requestURI)) {
 			chain.doFilter(request, response);
 			return;
@@ -77,16 +109,60 @@ public class AuthenticationFilter implements Filter{
 		//we have to validate token
 		//fetch the token from cookie present in request
 		String token = getAuthTokenFromCookie(httpRequest);
-		boolean validation = jwtService.validateToken(token);
 		
-		if (!validation) {
-			sendErrorResponse(httpResponse,HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid or expired token");
-			return;
+		if (token == null || token.isBlank()) {
+		    sendErrorResponse(
+		        httpResponse,
+		        HttpServletResponse.SC_UNAUTHORIZED,
+		        "Unauthorized: Please login first"
+		    );
+		    return;
 		}
 		
+		boolean validation;
+
+		try {
+		    validation = jwtService.validateToken(token);
+		} catch (Exception e) {
+		    validation = false;
+		}
+
+		if (!validation) {
+		    sendErrorResponse(
+		        httpResponse,
+		        HttpServletResponse.SC_UNAUTHORIZED,
+		        "Unauthorized: Invalid or expired token"
+		    );
+		    return;
+		}
 		
-		String username = jwtService.extractUsername(token);
+
+		String username;
+
+		try {
+		    username = jwtService.extractUsername(token);
+
+		    if (username == null || username.isBlank()) {
+		        sendErrorResponse(
+		            httpResponse,
+		            HttpServletResponse.SC_UNAUTHORIZED,
+		            "Unauthorized: Invalid token"
+		        );
+		        return;
+		    }
+
+		} catch (Exception e) {
+		    sendErrorResponse(
+		        httpResponse,
+		        HttpServletResponse.SC_UNAUTHORIZED,
+		        "Unauthorized: Invalid token"
+		    );
+		    return;
+		}
+
 		Optional<Users> optionalUser = userRepo.findByUsername(username);
+		
+		
 		if(optionalUser.isEmpty()) {
 			sendErrorResponse(httpResponse, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: UserNotFound");
 			return;
@@ -95,6 +171,9 @@ public class AuthenticationFilter implements Filter{
 		Users authenticatedUser = optionalUser.get();
 		Role role = authenticatedUser.getRole();
 		logger.info("Authenticated User : {} , Role : {} ", authenticatedUser.getUsername(), role);
+		
+		
+		
 		
 		if(requestURI.startsWith("/api") && (role != Role.ADMIN && role != Role.CUSTOMER)) {
 			sendErrorResponse(httpResponse, HttpServletResponse.SC_FORBIDDEN, "Unauthorized: Not Allowed for Role");
@@ -124,22 +203,36 @@ public class AuthenticationFilter implements Filter{
 
 	                String token = cookie.getValue();
 
-	                System.out.println(token);
-
 	                return token;
 	            }
 	        }
 	    }
 
-	    throw new RuntimeException("JWT cookie not found");
+	    return null;
 	}
 	
-	void setCORSHeaders(HttpServletResponse response) {
-		response.setHeader("ACCESS-CONTROL-ALLOW-ORIGIN", ALLOWED_ORIGIN);
-		response.setHeader("ACCESS-CONTROL-ALLOW-METHODS", "GET,POST,PUT,DELETE,OPTIONS");
-		response.setHeader("ACCESS-CONTROL-ALLOW-HEADERS", "Content-Type, Authorization");
-		response.setHeader("ACCESS-CONTROL-ALLOW-CREDENTIALS", "true");
-		response.setStatus(HttpServletResponse.SC_OK);
-	}
+	private void setCORSHeaders(HttpServletResponse response) {
 
+	    response.setHeader(
+	        "Access-Control-Allow-Origin",
+	        ALLOWED_ORIGIN
+	    );
+
+	    response.setHeader(
+	        "Access-Control-Allow-Methods",
+	        "GET, POST, PUT, DELETE, OPTIONS"
+	    );
+
+	    response.setHeader(
+	        "Access-Control-Allow-Headers",
+	        "Content-Type, Authorization"
+	    );
+
+	    response.setHeader(
+	        "Access-Control-Allow-Credentials",
+	        "true"
+	    );
+
+	    response.setHeader("Vary", "Origin");
+	}
 }
