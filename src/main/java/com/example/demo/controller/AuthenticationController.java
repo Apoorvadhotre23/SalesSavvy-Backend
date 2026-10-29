@@ -1,7 +1,10 @@
 package com.example.demo.controller;
 
 import java.util.Map;
+
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,5 +64,21 @@ public class AuthenticationController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+    
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(HttpServletResponse response) {
+
+    		ResponseCookie cookie = ResponseCookie.from("jwt", "")
+    				.httpOnly(true)
+    				.secure(false)
+    				.path("/")
+    				.maxAge(0)
+    				.sameSite("Lax")
+    				.build();
+
+    		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    		return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+}
 
 }

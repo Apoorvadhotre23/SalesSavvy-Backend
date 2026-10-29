@@ -35,7 +35,8 @@ public class AuthenticationFilter implements Filter{
 	
 	public static final String[] UNAUTHENTICATED_PATHS = {
 			"/api/auth/signup",
-			"/api/auth/login"
+			"/api/auth/login",
+			"/api/auth/logout"
 	};
 	
 	public AuthenticationFilter(AuthenticationService authservice, UserRepository userRepo, JwtService jwtService) {
