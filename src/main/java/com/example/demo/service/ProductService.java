@@ -53,4 +53,8 @@ public class ProductService {
 		return imageUrls;
 	}
 
+	
+	public Optional<Products> getProductById(Integer productId) {
+	    return productsRepository.findById(productId);
+	}
 }
