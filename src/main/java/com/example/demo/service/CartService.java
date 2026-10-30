@@ -120,5 +120,18 @@ public void updateQuantity(int userId, int cartItemId, int quantity) {
     cartRepository.save(cartItem);
 }
 
+@Transactional
+public void removeFromCart(int userId, int cartItemId) {
 
+    CartItems cartItem = cartRepository.findById(cartItemId)
+            .orElseThrow(() ->
+                new IllegalArgumentException("Cart item not found"));
+
+    // Verify that the cart item belongs to the logged-in user
+    if (cartItem.getUser().getUserId() != userId) {
+        throw new IllegalArgumentException("Cart item not found");
+    }
+
+    cartRepository.delete(cartItem);
+}
 }
