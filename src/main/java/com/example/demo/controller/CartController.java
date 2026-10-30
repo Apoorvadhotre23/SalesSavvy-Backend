@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +32,8 @@ public class CartController {
 		this.cartService =  cartService;
 	}
 
+	// Count logic is implemented 
+	
 	  @GetMapping("/count")
 	    public ResponseEntity<?> getCartCount(HttpServletRequest request) {
 
@@ -50,6 +53,7 @@ public class CartController {
 	    }
 	  
 	  
+	  // addToCart logic is implemented
 
 	  @PostMapping("/add")
 	  public ResponseEntity<?> addToCart(
@@ -80,6 +84,7 @@ public class CartController {
 	  }
 
 	  
+	  // GetCartItems logic is created
 	  
 
 @GetMapping
@@ -119,7 +124,7 @@ public ResponseEntity<?> getCartItems(HttpServletRequest request) {
 }
 
 	  
-
+// Update cartItems logic is created 
 
 @PutMapping("/update/{cartItemId}")
 public ResponseEntity<?> updateCartQuantity(
@@ -158,5 +163,39 @@ public ResponseEntity<?> updateCartQuantity(
                 .body(Map.of("error", e.getMessage()));
     }
 }
+
+
+// remove cart item logic is implemented
+
+
+@DeleteMapping("/remove/{cartItemId}")
+public ResponseEntity<?> removeFromCart(
+        @PathVariable int cartItemId,
+        HttpServletRequest request) {
+
+    Users authenticatedUser =
+            (Users) request.getAttribute("authenticatedUser");
+
+    if (authenticatedUser == null) {
+        return ResponseEntity.status(401)
+                .body(Map.of("error", "Please login first"));
+    }
+
+    try {
+        cartService.removeFromCart(
+                authenticatedUser.getUserId(),
+                cartItemId
+        );
+
+        return ResponseEntity.ok(
+                Map.of("message", "Product removed from cart successfully")
+        );
+
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", e.getMessage()));
+    }
+}
+
 
 }
