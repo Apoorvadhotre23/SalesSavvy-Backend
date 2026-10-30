@@ -85,43 +85,85 @@ public class ProductController {
 	
 	
 
-@GetMapping("/{productId}")
-public ResponseEntity<Map<String, Object>> getProductById(
-        @PathVariable Integer productId,
+     @GetMapping("/{productId}")
+     public ResponseEntity<Map<String, Object>> getProductById(
+    		 @PathVariable Integer productId,
+    		 HttpServletRequest request) {
+
+    	 Users authenticatedUser = (Users) request.getAttribute("authenticatedUser");
+
+    	 if (authenticatedUser == null) {
+    		 return ResponseEntity.status(401).body(Map.of("error", "Unauthorized Access"));
+    	 }
+
+    	 Optional<Products> optionalProduct = productService.getProductById(productId);
+
+    	 if (optionalProduct.isEmpty()) {
+    		 return ResponseEntity.status(404).body(Map.of("error", "Product not found"));
+    	 }
+
+    	 Products product = optionalProduct.get();
+
+    	 Map<String, Object> productDetails = new HashMap<>();
+
+    	 productDetails.put("productId", product.getProductId());
+    	 productDetails.put("name", product.getName());
+    	 productDetails.put("description", product.getDescription());
+    	 productDetails.put("price", product.getPrice());
+    	 productDetails.put("stock", product.getStock());
+
+    	 List<String> images = productService.getProductImage(product.getProductId());
+
+         productDetails.put("image", images);
+
+         return ResponseEntity.ok(productDetails);
+     }
+     
+     
+
+@GetMapping("/search")
+public ResponseEntity<?> searchProducts(
+        @RequestParam String keyword,
         HttpServletRequest request) {
 
+    // Step 1: Check authenticated user
     Users authenticatedUser =
             (Users) request.getAttribute("authenticatedUser");
 
     if (authenticatedUser == null) {
         return ResponseEntity.status(401)
-                .body(Map.of("error", "Unauthorized Access"));
+                .body(Map.of("error", "Please login first"));
     }
 
-    Optional<Products> optionalProduct =
-            productService.getProductById(productId);
+    // Step 2: Search products using keyword
+    List<Products> products = productService.searchProducts(keyword);
 
-    if (optionalProduct.isEmpty()) {
-        return ResponseEntity.status(404)
-                .body(Map.of("error", "Product not found"));
+    // Step 3: Prepare product response
+    List<Map<String, Object>> productList = new ArrayList<>();
+
+    for (Products product : products) {
+
+        Map<String, Object> productDetails = new HashMap<>();
+
+        productDetails.put("productId", product.getProductId());
+        productDetails.put("name", product.getName());
+        productDetails.put("description", product.getDescription());
+        productDetails.put("price", product.getPrice());
+        productDetails.put("stock", product.getStock());
+
+        // Fetch product images
+        List<String> images =
+                productService.getProductImage(product.getProductId());
+
+        productDetails.put("image", images);
+
+        productList.add(productDetails);
     }
 
-    Products product = optionalProduct.get();
-
-    Map<String, Object> productDetails = new HashMap<>();
-
-    productDetails.put("productId", product.getProductId());
-    productDetails.put("name", product.getName());
-    productDetails.put("description", product.getDescription());
-    productDetails.put("price", product.getPrice());
-    productDetails.put("stock", product.getStock());
-
-    List<String> images =
-            productService.getProductImage(product.getProductId());
-
-    productDetails.put("image", images);
-
-    return ResponseEntity.ok(productDetails);
+    // Step 4: Return matching products
+    return ResponseEntity.ok(Map.of("products", productList));
 }
 
 }
+
+

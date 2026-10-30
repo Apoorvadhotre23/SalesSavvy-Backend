@@ -57,4 +57,31 @@ public class ProductService {
 	public Optional<Products> getProductById(Integer productId) {
 	    return productsRepository.findById(productId);
 	}
+	
+	
+
+	public List<Products> searchProducts(String keyword) {
+
+		if (keyword == null || keyword.trim().isEmpty()) {
+			return new ArrayList<>();
+		}
+
+		String searchText = keyword.trim().toLowerCase();
+
+		// Handle common singular/plural category searches
+		if (searchText.equals("shirts")) {
+			searchText = "shirt";
+		} else if (searchText.equals("mobiles")) {
+			searchText = "mobile";
+		} else if (searchText.equals("pants")) {
+			searchText = "pant";
+		} else if (searchText.equals("accessory")
+		        || searchText.equals("accessories")
+		        || searchText.equals("accesories")) {
+		    searchText = "accesories";
+		}
+
+		return productsRepository.searchProducts(searchText);
+	}
+
 }
