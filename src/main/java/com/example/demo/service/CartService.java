@@ -90,7 +90,35 @@ public class CartService {
     
 
 
+@Transactional
+public void updateQuantity(int userId, int cartItemId, int quantity) {
 
+    // Check quantity
+    if (quantity <= 0) {
+        throw new IllegalArgumentException("Invalid quantity");
+    }
+
+    // Find cart item
+    CartItems cartItem = cartRepository.findById(cartItemId)
+            .orElseThrow(() ->
+                new IllegalArgumentException("Cart item not found"));
+
+    // Check whether cart item belongs to logged-in user
+    if (cartItem.getUser().getUserId() != userId) {
+        throw new IllegalArgumentException("Cart item not found");
+    }
+
+    // Check product stock
+    if (quantity > cartItem.getProduct().getStock()) {
+        throw new IllegalArgumentException("Not enough stock");
+    }
+
+    // Update quantity
+    cartItem.setQuantity(quantity);
+
+    // Save updated cart item
+    cartRepository.save(cartItem);
+}
 
 
 }
