@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,15 +22,19 @@ import com.example.demo.entity.Users;
 import com.example.demo.service.CartService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.example.demo.entity.ProductImages;
+import com.example.demo.repository.ProductImagesRepository;
 
 @RestController
 @RequestMapping("/api/cart")
 public class CartController {
 	
 	private CartService cartService;
+	 ProductImagesRepository productImagesRepository;
 	
-	public CartController(CartService cartService) {
+	public CartController(CartService cartService, ProductImagesRepository productImagesRepository) {
 		this.cartService =  cartService;
+		this.productImagesRepository = productImagesRepository;
 	}
 
 	// Count logic is implemented 
@@ -116,6 +121,12 @@ public ResponseEntity<?> getCartItems(HttpServletRequest request) {
         cartDetails.put("price", product.getPrice());
         cartDetails.put("quantity", item.getQuantity());
         cartDetails.put("stock", product.getStock());
+        
+        List<ProductImages> images =productImagesRepository.findByProduct_productId( product.getProductId());
+
+        String imageUrl = images.isEmpty()? null: images.get(0).getImageUrl();
+
+        cartDetails.put("imageUrl", imageUrl);
 
         cartList.add(cartDetails);
     }
