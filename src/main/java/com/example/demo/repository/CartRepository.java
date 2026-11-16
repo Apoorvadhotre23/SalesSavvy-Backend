@@ -26,5 +26,7 @@ public interface CartRepository extends JpaRepository<CartItems, Integer>{
     @Query("SELECT c FROM CartItems c WHERE c.user.userId = :userId")
     List<CartItems> findByUserId(@Param("userId") int userId);
     
+ // Delete all cart items belonging to a user
+    void deleteByUser_UserId(int userId);
   
 }

@@ -4,8 +4,13 @@ package com.example.demo.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.example.demo.enums.OrderStatus;
+import com.example.demo.enums.PaymentStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -27,8 +32,9 @@ public class Orders {
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status = "PENDING";
+    private OrderStatus status = OrderStatus.PENDING;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -57,14 +63,22 @@ public class Orders {
     @Column(name = "payment_method", length = 30)
     private String paymentMethod;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", length = 30)
-    private String paymentStatus = "PENDING";
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+    
+    @Column(name = "razorpay_order_id", length = 100)
+    private String razorpayOrderId;
+
 
     // Default constructor
     public Orders() {
     }
+    
+    
+   
 
-    // Getters and Setters
+	// Getters and Setters
 
     public String getOrderId() {
         return orderId;
@@ -90,13 +104,6 @@ public class Orders {
         this.totalAmount = totalAmount;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -162,11 +169,34 @@ public class Orders {
         this.paymentMethod = paymentMethod;
     }
 
-    public String getPaymentStatus() {
-        return paymentStatus;
-    }
+ 
 
-    public void setPaymentStatus(String paymentStatus) {
-        this.paymentStatus = paymentStatus;
-    }
+	public String getRazorpayOrderId() {
+		return razorpayOrderId;
+	}
+
+	public void setRazorpayOrderId(String razorpayOrderId) {
+		this.razorpayOrderId = razorpayOrderId;
+	}
+
+	public OrderStatus getStatus() {
+		return status;
+	}
+
+
+	public void setStatus(OrderStatus status) {
+		this.status = status;
+	}
+
+
+	public PaymentStatus getPaymentStatus() {
+		return paymentStatus;
+	}
+
+
+	public void setPaymentStatus(PaymentStatus paymentStatus) {
+		this.paymentStatus = paymentStatus;
+	}
+    
+    
 }
